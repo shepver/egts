@@ -1,2 +1,2 @@
-PROJECT = dispatcher
+PROJECT = egts
 include erlang.mk
