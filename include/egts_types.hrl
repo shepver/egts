@@ -18,7 +18,7 @@
 -define(FLOAT, 32 / signed - float - little).
 -define(DOUBLE, 64 / signed - float - little).
 -define(STRING, bitstring).
--define(BINARY, byte).
+-define(BINARY, binary).
 
 
 -define(BOLLEAN_SIZE, 8).
@@ -31,4 +31,4 @@
 -define(FLOAT_SIZE, 32).
 -define(DOUBLE_SIZE, 64).
 
--record(auth, {tid = null, imei = null, imsi = null, hdid = null, msisdn = null, mcc =null, mnc = null, lngc = "rus", bs = 1024}).
+-record(auth, {tid = null, imei = null, imsi = null, hdid = null, msisdn = null, mcc = 1, mnc = 1, lngc = "rus", bs = 1024}).
