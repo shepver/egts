@@ -11,7 +11,9 @@
 -include("../include/egts_types.hrl").
 %% API
 %% -export([encode_pos_data/1]).
--export([egts_auth/1]).
+-export([start/0,stop/0]).
+
+-export([auth/1]).
 
 %% encode_pos_data(Data) when is_tuple(Data) ->
 %%   {Time, Lon, Lat} = Data,
@@ -24,8 +26,15 @@
 %% get_pos_data_packet({Time, Lon, Lat}) ->
 %%   packet.
 
+start() ->
+  application:start(egts).
 
-egts_auth([Login, IMEI]) ->
-  Data = egts_auth_service:term_identity(#auth{tid = Login, imei = IMEI}),
+stop() ->
+  application:stop(egts).
+
+
+
+auth([Login, IMEI]) ->
+  Data = gen_server:call(egts_work,{egts_auth,#auth{tid = Login, imei = IMEI}}),
   Data.
 

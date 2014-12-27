@@ -2,19 +2,19 @@
 %%% @author shepver
 %%% @copyright (C) 2014, <COMPANY>
 %%% @doc
-%%% пока что для того чтобы make не выдавал ошибки
+%%%
 %%% @end
 %%% Created : 25. Дек. 2014 11:05
 %%%-------------------------------------------------------------------
 {application, egts, [
-  {description, ""},
-  {vsn, "1"},
-  {registered, []},
+  {description, "EGTS. - Era Glonass Telematics Standard"},
+  {vsn, "0.0.1"},
+  {registered, [emysql_work]},
   {applications, [
     kernel,
     stdlib
   ]},
   {modules, []},
-  {mod, {egts, []}},
+  {mod, {egts_app, []}},
   {env, []}
 ]}.
