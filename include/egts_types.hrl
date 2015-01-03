@@ -31,4 +31,21 @@
 -define(FLOAT_SIZE, 32).
 -define(DOUBLE_SIZE, 64).
 
+-record(transport, {prv,skid,
+     prf, rte, ena, cmp, pr
+%%     ,HL,
+%%     HE,
+%%     FDL,
+%%     PID,
+%%     PT,
+%%     PRA,
+%%     RCA,
+%%     TTL,
+%%     HCS,
+%%     SFRD,
+%%     SFRCS
+}).
+
 -record(auth, {tid = null, imei = null, imsi = null, hdid = null, msisdn = null, mcc = 1, mnc = 1, lngc = "rus", bs = 1024}).
+
+-record(auth_disp, {dt = null, did = null, dscr = null}).

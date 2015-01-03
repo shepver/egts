@@ -14,6 +14,7 @@
 -export([start/0,stop/0]).
 
 -export([auth/1]).
+-export([auth_disp/1]).
 
 %% encode_pos_data(Data) when is_tuple(Data) ->
 %%   {Time, Lon, Lat} = Data,
@@ -38,3 +39,5 @@ auth([Login, IMEI]) ->
   Data = gen_server:call(egts_work,{egts_auth,#auth{tid = Login, imei = IMEI}}),
   Data.
 
+auth_disp([])->
+  ok.
