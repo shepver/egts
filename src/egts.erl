@@ -11,10 +11,17 @@
 -include("../include/egts_types.hrl").
 %% API
 %% -export([encode_pos_data/1]).
--export([start/0,stop/0]).
+-export([start/0, stop/0]).
 
 -export([auth/1]).
 -export([auth_disp/1]).
+
+-export([
+  crc8/1,
+  crc16/1,
+  check_crc8/2,
+  check_crc16/2
+]).
 
 %% encode_pos_data(Data) when is_tuple(Data) ->
 %%   {Time, Lon, Lat} = Data,
@@ -36,10 +43,15 @@ stop() ->
 
 
 auth([Login, IMEI]) ->
-  Data = gen_server:call(egts_work,{egts_auth,#auth{tid = Login, imei = IMEI}}),
-  Data.
+  {ok, SubType, Data} = egts_auth_service:term_identity(#auth{tid = Login, imei = IMEI}),
+  {ok, RecordData} = egts_service:auth_pack([Data, 1, SubType]),
+  {ok, TransportData} = egts_transport:pack([RecordData, 1]),
 
-auth_disp([])->
+%%     gen_server:call(egts_work,{egts_auth,#auth{tid = Login, imei = IMEI}}),
+%%   RecordData.
+  TransportData.
+
+auth_disp([]) ->
   ok.
 
 %% код временно взят от сюда
@@ -120,7 +132,7 @@ auth_disp([])->
 check_crc8(CRC, Bin) ->
   case crc8(Bin) of
     CRC -> true;
-    _   -> false
+    _ -> false
   end.
 
 crc8(Data) ->
@@ -142,7 +154,7 @@ crc8(<<B:8, Else/binary>>, CRC) ->
 check_crc16(CRC, Bin) ->
   case crc16(Bin, 16#FFFF) of
     CRC -> true;
-    _   -> false
+    _ -> false
   end.
 
 crc16(Data) ->

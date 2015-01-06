@@ -47,7 +47,7 @@ response(Data) ->
 
 term_identity(Auth) ->
   try packet_data(Auth) of
-    {ok, Data} -> {ok, Data};
+    {ok, Data} -> {ok, ?EGTS_SR_TERM_IDENTITY, Data};
     {error, Reason} -> {error, Reason}
   catch
     throw:Error -> {throw, Error};

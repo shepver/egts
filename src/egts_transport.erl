@@ -7,10 +7,12 @@
 %%% Created : 21. Дек. 2014 15:14
 %%%-------------------------------------------------------------------
 -module(egts_transport).
+
 -author("shepver").
 
+-include("../include/egts_types.hrl").
 %% API
--export([]).
+-export([parse/1, pack/1]).
 
 
 -define(EGTS_PT_RESPONSE, 0). %% -подтверждение на пакет Транспортного уровня.
@@ -108,21 +110,38 @@
 %%     SFRCS) -> ok.
 %%
 %% decode() -> ok.
-%%
-%% packet() ->
-%%   <<
-%%   PRV/binary,
-%%   SKID/binary,
-%%   PRF/binary, RTE/binary, ENA/binary, CMP/binary, PR/binary,
-%%   HL/binary,
-%%   HE/binary,
-%%   FDL/binary,
-%%   PID/binary,
-%%   PT/binary,
-%%   PRA/binary,
-%%   RCA/binary,
-%%   TTL/binary,
-%%   HCS/binary,
-%%   SFRD/binary,
-%%   SFRCS/binary
-%%   >>.
+
+parse(<<1:?BYTE, _Skid:?BYTE
+, 0:2, 0:1, 0:2, 0:1, _PR:2,
+11:?BYTE, _:8,
+FDL:?USHORT, _/binary>> = Data) when FDL > 0 ->
+  <<Header:80/binary, HCS:?BYTE, FD/binary>> = Data,
+  Size = FDL * 8,
+  <<SFRD:Size/binary, SFRCS:?USHORT>> = FD,
+  case {egts:check_crc8(HCS, Header), egts:check_crc16(SFRCS, SFRD)} of
+    {true, true} -> {ok, SFRD};
+    {false, _} -> {error, he};
+    {_, false} -> {error, de}
+  end
+;
+parse(_Data) ->
+  {error, unknown}.
+
+
+
+pack([Data, Pid]) ->
+  FDL = byte_size(Data),
+  Flag = <<0:2, 0:1, 0:2, 0:1, 1:2>>,
+  Header =
+    <<1:?BYTE,
+    0:?BYTE,
+    Flag/binary,
+    11:?BYTE,
+    0:?BYTE,
+    FDL:?USHORT,
+    Pid:?USHORT,
+    1:?BYTE>>,
+  HCS = egts:crc8(Header),
+  SFRCS = egts:crc16(Data),
+  {ok, <<Header/binary, HCS:?BYTE, Data/binary, SFRCS:?USHORT>>}
+.
