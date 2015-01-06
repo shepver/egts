@@ -11,6 +11,7 @@
 -author("shepver").
 
 -include("../include/egts_types.hrl").
+-include("../include/egts_response_code.hrl").
 %% API
 -export([parse/1, pack/1]).
 
@@ -111,17 +112,21 @@
 %%
 %% decode() -> ok.
 
-parse(<<1:?BYTE, _Skid:?BYTE
-, 0:2, 0:1, 0:2, 0:1, _PR:2,
-11:?BYTE, _:8,
-FDL:?USHORT, _/binary>> = Data) when FDL > 0 ->
+
+parse(<<PVR:?BYTE, _:?BYTE, PRF:2, _/binary>> = _Data) when (PVR =/= 1) and (PRF =/= 2#00) ->
+  {error, ?EGTS_PC_UNS_PROTOCOL};
+parse(<<_:24, HL:?BYTE, _/binary>> = _Data) when (HL =/= 11) or (HL =/= 16) ->
+  {error, ?EGTS_PC_INC_HEADERFORM};
+parse(<<_:40, FDL:?USHORT, _/binary>> = _Data) when (FDL =:= 0) ->
+  {error, ?EGTS_PC_OK};
+parse(<<1:?BYTE, _Skid:?BYTE, 0:2, 0:1, 0:2, 0:1, _PR:2, 11:?BYTE, _:8, FDL:?USHORT, _/binary>> = Data) when FDL > 0 ->
   <<Header:80/binary, HCS:?BYTE, FD/binary>> = Data,
   Size = FDL * 8,
   <<SFRD:Size/binary, SFRCS:?USHORT>> = FD,
-  case {egts:check_crc8(HCS, Header), egts:check_crc16(SFRCS, SFRD)} of
+  case {egts_utils:check_crc8(HCS, Header), egts_utils:check_crc16(SFRCS, SFRD)} of
     {true, true} -> {ok, SFRD};
-    {false, _} -> {error, he};
-    {_, false} -> {error, de}
+    {false, _} -> {error, ?EGTS_PC_HEADERCRC_ERROR};
+    {_, false} -> {error, ?EGTS_PC_DATACRC_ERROR}
   end
 ;
 parse(_Data) ->
@@ -141,7 +146,7 @@ pack([Data, Pid]) ->
     FDL:?USHORT,
     Pid:?USHORT,
     1:?BYTE>>,
-  HCS = egts:crc8(Header),
-  SFRCS = egts:crc16(Data),
+  HCS = egts_utils:crc8(Header),
+  SFRCS = egts_utils:crc16(Data),
   {ok, <<Header/binary, HCS:?BYTE, Data/binary, SFRCS:?USHORT>>}
 .
