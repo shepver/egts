@@ -52,12 +52,12 @@ auth_disp([]) ->
   ok.
 
 response([Data]) ->
-  case egts_transport:parse([Data]) of
+  case egts_transport:parse(Data) of
     {error, Code} -> {error, egts_utils:result(Code)};
     {ok, RecordData} -> {ok, RecordData}
   end.
 
 test() ->
   Data = auth([11, 111111]),
-  response([Data]).
+  {response([Data]), Data}.
 

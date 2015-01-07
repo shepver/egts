@@ -115,14 +115,14 @@
 
 parse(<<PVR:?BYTE, _:?BYTE, PRF:2, _/binary>> = _Data) when (PVR =/= 1) and (PRF =/= 2#00) ->
   {error, ?EGTS_PC_UNS_PROTOCOL};
-parse(<<_:24, HL:?BYTE, _/binary>> = _Data) when (HL =/= 11) or (HL =/= 16) ->
+parse(<<_:24, HL:?BYTE, _/binary>> = _Data) when (HL =/= 11) andalso (HL =/= 16) ->
+  error_logger:info_msg(" HL = ~p ", [HL]),
   {error, ?EGTS_PC_INC_HEADERFORM};
 parse(<<_:40, FDL:?USHORT, _/binary>> = _Data) when (FDL =:= 0) ->
   {error, ?EGTS_PC_OK};
-parse(<<1:?BYTE, _Skid:?BYTE, 0:2, 0:1, 0:2, 0:1, _PR:2, 11:?BYTE, _:8, FDL:?USHORT, _/binary>> = Data) when FDL > 0 ->
-  <<Header:80/binary, HCS:?BYTE, FD/binary>> = Data,
-  Size = FDL * 8,
-  <<SFRD:Size/binary, SFRCS:?USHORT>> = FD,
+parse(<<1:?BYTE, _Skid:?BYTE, 0:2, 0:1, 0:2, 0:1, _PR:2, 11:?BYTE, _:8, FDL:?USHORT, _/binary>> = Data) when (FDL > 0) ->
+  <<Header:10/binary-unit:8, HCS:?BYTE, FD/binary>> = Data,
+    <<SFRD:FDL/binary-unit:8, SFRCS:?USHORT>> = FD,
   case {egts_utils:check_crc8(HCS, Header), egts_utils:check_crc16(SFRCS, SFRD)} of
     {true, true} -> {ok, SFRD};
     {false, _} -> {error, ?EGTS_PC_HEADERCRC_ERROR};
@@ -139,7 +139,7 @@ pack([Data, Pid]) ->
   Flag = <<0:2, 0:1, 0:2, 0:1, 1:2>>,
   Header =
     <<1:?BYTE,
-    0:?BYTE,
+    2#00:?BYTE,
     Flag/binary,
     11:?BYTE,
     0:?BYTE,

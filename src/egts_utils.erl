@@ -67,7 +67,8 @@ result(160) -> 'EGTS_PC_MODULE_SW_FLT'; %%  сбой в работе прогр�
 result(161) -> 'EGTS_PC_MODULE_FW_FLT'; %%  сбой в работе внутреннего ПО модуля
 result(162) -> 'EGTS_PC_MODULE_IO_FLT'; %%  сбой в работе блока ввода/вывода модуля
 result(163) -> 'EGTS_PC_MODULE_MEM_FLT'; %%  сбой в работе внутренней памяти модуля
-result(164) -> 'EGTS_PC_TEST_FAILED'. %%  тест не пройден
+result(164) -> 'EGTS_PC_TEST_FAILED'; %%  тест не пройден
+result(_) -> 'unknown_code'. %%  тест не пройден
 
 data_to_bin(Data, _Size) when (Data == null) ->
   {empty, "Data is null."};
