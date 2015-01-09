@@ -11,17 +11,10 @@
 -author("shepver").
 
 -include("../include/egts_types.hrl").
--include("../include/egts_response_code.hrl").
+-include("../include/egts_code.hrl").
+-include("../include/egts_record.hrl").
 %% API
--export([parse/1, pack/1]).
-
-
--define(EGTS_PT_RESPONSE, 0). %% -подтверждение на пакет Транспортного уровня.
--define(EGTS_PT_APPDATA, 1). %% - пакет, содержащий данные протокола Уровня поддержки услуг.
--define(EGTS_PT_SIGNED_APPDATA, 2). %% - пакет, содержащий данные протокола Уровня поддержки услуг с цифровой подписью.
-
-
--define(PVR, 1). %% (Protocol Version)
+-export([parse/1, pack/1, response/1]).
 
 
 %%  Заголовок протокола Транспортного уровня состоит из следующих полей
@@ -120,11 +113,11 @@ parse(<<_:24, HL:?BYTE, _/binary>> = _Data) when (HL =/= 11) andalso (HL =/= 16)
   {error, ?EGTS_PC_INC_HEADERFORM};
 parse(<<_:40, FDL:?USHORT, _/binary>> = _Data) when (FDL =:= 0) ->
   {error, ?EGTS_PC_OK};
-parse(<<1:?BYTE, _Skid:?BYTE, 0:2, 0:1, 0:2, 0:1, _PR:2, 11:?BYTE, _:8, FDL:?USHORT, _/binary>> = Data) when (FDL > 0) ->
+parse(<<1:?BYTE, _Skid:?BYTE, 0:2, 0:1, 0:2, 0:1, _PR:2, 11:?BYTE, _:8, FDL:?USHORT, PID:?USHORT, PT:?BYTE, _/binary>> = Data) when (FDL > 0) ->
   <<Header:10/binary-unit:8, HCS:?BYTE, FD/binary>> = Data,
-    <<SFRD:FDL/binary-unit:8, SFRCS:?USHORT>> = FD,
+  <<SFRD:FDL/binary-unit:8, SFRCS:?USHORT>> = FD,
   case {egts_utils:check_crc8(HCS, Header), egts_utils:check_crc16(SFRCS, SFRD)} of
-    {true, true} -> {ok, SFRD};
+    {true, true} -> {ok, {PT, PID, SFRD}};
     {false, _} -> {error, ?EGTS_PC_HEADERCRC_ERROR};
     {_, false} -> {error, ?EGTS_PC_DATACRC_ERROR}
   end
@@ -133,8 +126,20 @@ parse(_Data) ->
   {error, unknown}.
 
 
+response(Data) ->
+  case parse(Data) of
+    {ok, {?EGTS_PT_RESPONSE, _PID, SFRD}} ->
+      <<RPID:?USHORT, PR:?BYTE, Other/binary>> = SFRD,
+      {ok, #egts_pt_response{rpid = RPID, pr = PR, record_list = Other}};
+    {ok, {?EGTS_PT_APPDATA, PID, SFRD}} ->
+      {ok, #egts_pt_appdata{record_list = SFRD, response = <<PID:?USHORT, ?EGTS_PC_OK:?BYTE, SFRD/binary>>}};
+    All -> All
+  end.
+
 
 pack([Data, Pid]) ->
+  pack([Data, Pid, ?EGTS_PT_APPDATA]);
+pack([Data, Pid, PType]) ->
   FDL = byte_size(Data),
   Flag = <<0:2, 0:1, 0:2, 0:1, 1:2>>,
   Header =
@@ -145,7 +150,7 @@ pack([Data, Pid]) ->
     0:?BYTE,
     FDL:?USHORT,
     Pid:?USHORT,
-    1:?BYTE>>,
+    PType:?BYTE>>,
   HCS = egts_utils:crc8(Header),
   SFRCS = egts_utils:crc16(Data),
   {ok, <<Header/binary, HCS:?BYTE, Data/binary, SFRCS:?USHORT>>}

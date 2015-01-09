@@ -22,12 +22,25 @@
 -export([to_double/1]).
 -export([result/1]).
 
+-export([service/1]).
+-export([erecord/2]).
+-export([get_time/0, get_time/1]).
+%% -export([sub_erecord/1]).
+
 -export([
   crc8/1,
   crc16/1,
   check_crc8/2,
   check_crc16/2
 ]).
+
+
+service(1) -> egts_auth_service;
+service(2) -> egts_teledata_service.
+erecord(_, 0) -> egts_sr_record_responce;
+erecord(1, 1) -> egts_sr_term_identity;
+erecord(_, _) -> netu.
+
 
 result(0) -> 'EGTS_PC_OK'; %%  успешно обработано
 result(1) -> 'EGTS_PC_IN_PROGRESS'; %%  в процессе обработки
@@ -69,6 +82,15 @@ result(162) -> 'EGTS_PC_MODULE_IO_FLT'; %%  сбой в работе блока 
 result(163) -> 'EGTS_PC_MODULE_MEM_FLT'; %%  сбой в работе внутренней памяти модуля
 result(164) -> 'EGTS_PC_TEST_FAILED'; %%  тест не пройден
 result(_) -> 'unknown_code'. %%  тест не пройден
+
+
+get_time() ->
+  {Mega, Sec, _} = now(),
+  Mega * 1000000 + Sec - 63429523200
+.
+get_time(Time) ->
+  Time - 63429523200
+.
 
 data_to_bin(Data, _Size) when (Data == null) ->
   {empty, "Data is null."};
@@ -160,9 +182,6 @@ to_double(Data) ->
     true ->
       {error, "Error invalid data"}
   end.
-
-
-
 
 
 %% код временно взят от сюда

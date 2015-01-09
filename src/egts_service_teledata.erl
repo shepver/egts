@@ -4,10 +4,9 @@
 %%% @doc
 %%%
 %%% @end
-%%% Created : 21. Дек. 2014 2:34
+%%% Created : 23. Дек. 2014 15:01
 %%%-------------------------------------------------------------------
--module(egts_sr_pos_data).
--include("egts_types.hrl").
+-module(egts_service_teledata).
 -author("shepver").
 
 %% API

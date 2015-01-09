@@ -80,7 +80,7 @@ init([]) ->
 
 
 handle_call({egts_auth,Auth}, _From, State) ->
-  Data = egts_auth_service:term_identity(Auth),
+  Data = egts_service_auth:term_identity(Auth),
   {reply,  Data, State};
 
 

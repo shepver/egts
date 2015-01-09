@@ -6,12 +6,13 @@
 %%% @end
 %%% Created : 23. Дек. 2014 15:00
 %%%-------------------------------------------------------------------
--module(egts_auth_service).
+-module(egts_service_auth).
 -author("shepver").
 -include("../include/egts_types.hrl").
+-include("../include/egts_record.hrl").
 %% API
 -export([term_identity/1]).
--export([response/1]).
+-export([response/2]).
 
 %% --------------------------------------------------------------------
 -define(EGTS_SR_RECORD_RESPONSE, 0).
@@ -23,10 +24,6 @@
 %% услуг. Данный тип подзаписи
 %% должен поддерживаться всеми
 %% сервисами
-
-response(Data) ->
-  <<_CRN:?USHORT, _RST:?BYTE>> = Data,
-  ok.
 
 %%   - CRN - номер подтверждаемой записи (значение поля RN из
 %%   обрабатываемой записи);
@@ -134,6 +131,7 @@ packet_data(Auth, 8, Header, Option) ->
 packet_data(_, _, Data, _) ->
   Data.
 
+
 %% data(Data) ->
 %%   <<
 %%   TDI:?UINT,
@@ -149,3 +147,11 @@ packet_data(_, _, Data, _) ->
 %%
 %%   <<_:4, MCC:10, MNC:10>> = NID,
 %%   ok.
+
+response(?EGTS_SR_RECORD_RESPONSE, Data) ->
+  <<CRN:?USHORT, RST:?BYTE>> = Data,
+  {CRN, RST};
+response(?EGTS_SR_TERM_IDENTITY, _Data) ->
+  {term_identy};
+response(_, _Data) ->
+  {xz}.
