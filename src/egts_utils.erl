@@ -39,7 +39,7 @@ service(1) -> egts_auth_service;
 service(2) -> egts_teledata_service.
 erecord(_, 0) -> egts_sr_record_responce;
 erecord(1, 1) -> egts_sr_term_identity;
-erecord(_, _) -> netu.
+erecord(S, R) -> {S,R}.
 
 
 result(0) -> 'EGTS_PC_OK'; %%  успешно обработано
