@@ -44,7 +44,7 @@ stop() ->
 
 
 auth([Login, IMEI]) ->
-  {ok, SubType, Data} = egts_service_auth:term_identity(#auth{tid = Login, imei = IMEI}),
+  {ok, SubType, Data} = egts_service_auth:term_identity(#auth{tid = Login, imei = IMEI,hdid = 1}),
   NumberRecord = 1, %% порядковый номер строки
   {ok, RecordData} = egts_service:auth_pack([Data, NumberRecord, SubType]),
   PID = 1, %% идентификатор пакета или просто номео пакета в сессии (для аутентификации он всегда 1)

@@ -153,5 +153,5 @@ response(?EGTS_SR_RECORD_RESPONSE, Data) ->
   {CRN, RST};
 response(?EGTS_SR_TERM_IDENTITY, _Data) ->
   {term_identy};
-response(_, _Data) ->
-  {xz}.
+response(_, Data) ->
+  {Data}.
