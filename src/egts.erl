@@ -19,6 +19,8 @@
 -export([auth_disp/1]).
 -export([response/1]).
 
+-export([pos_data/1]).
+
 
 -export([test/0]).
 
@@ -54,6 +56,14 @@ auth([Login, IMEI]) ->
 
 auth_disp([]) ->
   ok.
+
+pos_data([]) ->
+%%   {ok, SubType, Data} = egts_service_teledata:term_identity(#auth{tid = Login, imei = IMEI}),
+%%   NumberRecord = 1, %% порядковый номер строки
+%%   {ok, RecordData} = egts_service:auth_pack([Data, NumberRecord, SubType]),
+%%   PID = 2, %% идентификатор пакета или просто номео пакета в сессии (для аутентификации он всегда 1)
+%%   {ok, TransportData} = egts_transport:pack([RecordData, PID])
+ok.
 
 
 %%  получили товет от сервера и обрабатываем

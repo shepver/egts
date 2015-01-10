@@ -24,7 +24,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {pid = 1}).
+-record(state, {pid = 1, socket}).
 
 %%%===================================================================
 %%% API
@@ -60,7 +60,12 @@ start_link() ->
   {ok, State :: #state{}} | {ok, State :: #state{}, timeout() | hibernate} |
   {stop, Reason :: term()} | ignore).
 init([]) ->
-  {ok, #state{}}.
+  {ok, Sock} = gen_tcp:connect('127.0.0.1', 7706, [binary, {packet, 0}]),
+  error_logger:info_msg("connect ~p .~n", [Sock]),
+  erlang:send_after(10, self(), run),
+  {ok, #state{socket = Sock}}
+%%     {ok, #state{}}
+.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -79,10 +84,14 @@ init([]) ->
   {stop, Reason :: term(), NewState :: #state{}}).
 
 
-handle_call({egts_auth,Auth}, _From, State) ->
+handle_call({egts_auth, Auth}, _From, State) ->
   Data = egts_service_auth:term_identity(Auth),
-  {reply,  Data, State};
+  {reply, Data, State};
 
+handle_call(run, _From, State) ->
+  Data = egts:auth([1, 123456789012345]),
+  gen_tcp:send(State#state.socket, Data),
+  {reply, ok, State};
 
 handle_call(_Request, _From, State) ->
   {reply, ok, State}.
@@ -115,7 +124,20 @@ handle_cast(_Request, State) ->
   {noreply, NewState :: #state{}} |
   {noreply, NewState :: #state{}, timeout() | hibernate} |
   {stop, Reason :: term(), NewState :: #state{}}).
+
+handle_info(run, State) ->
+  Data = egts:auth([1, 123456789012345]),
+  gen_tcp:send(State#state.socket, Data),
+  error_logger:info_msg("Send  ~p .~n", [Data]),
+  {noreply, State};
+
+handle_info({tcp, _Socket, Data}, State) ->
+  Result = egts:response(Data),
+  error_logger:info_msg("Result ~p .~n", [Result]),
+  {noreply, State};
+
 handle_info(_Info, State) ->
+  error_logger:info_msg("info ~p .~n", [_Info]),
   {noreply, State}.
 
 %%--------------------------------------------------------------------

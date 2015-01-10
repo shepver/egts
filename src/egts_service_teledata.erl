@@ -8,9 +8,10 @@
 %%%-------------------------------------------------------------------
 -module(egts_service_teledata).
 -author("shepver").
-
+-include("../include/egts_types.hrl").
+-include("../include/egts_record.hrl").
 %% API
--export([]).
+-export([pos_data/1]).
 
 
 %% packet(TIME) ->
@@ -28,3 +29,10 @@
 
 %%
 %% >>.
+
+
+-spec(pos_data(PosData :: #pos_data{}) ->
+  {ok, Data :: binary} | {error, Reason :: term()}).
+
+pos_data(_PosData) ->
+  ok.
