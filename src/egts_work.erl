@@ -60,11 +60,11 @@ start_link() ->
   {ok, State :: #state{}} | {ok, State :: #state{}, timeout() | hibernate} |
   {stop, Reason :: term()} | ignore).
 init([]) ->
-  {ok, Sock} = gen_tcp:connect('127.0.0.1', 7706, [binary, {packet, 0}]),
-  error_logger:info_msg("connect ~p .~n", [Sock]),
-  erlang:send_after(10, self(), run),
-  {ok, #state{socket = Sock}}
-%%     {ok, #state{}}
+%%   {ok, Sock} = gen_tcp:connect('127.0.0.1', 7706, [binary, {packet, 0}]),
+%%   error_logger:info_msg("connect ~p .~n", [Sock]),
+%%   erlang:send_after(10, self(), run),
+%%   {ok, #state{socket = Sock}}
+    {ok, #state{}}
 .
 
 %%--------------------------------------------------------------------

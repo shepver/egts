@@ -43,13 +43,12 @@ stop() ->
 
 
 
-auth([Login, IMEI]) ->
-  {ok, SubType, Data} = egts_service_auth:term_identity(#auth{tid = Login, imei = IMEI,hdid = 1}),
+auth({Pid, [Login, IMEI, Disp]}) ->
+  {ok, SubType, Data} = egts_service_auth:term_identity(#auth{tid = Login, imei = IMEI, hdid = Disp}),
   NumberRecord = 1, %% порядковый номер строки
   {ok, RecordData} = egts_service:auth_pack([Data, NumberRecord, SubType]),
-  PID = 1, %% идентификатор пакета или просто номео пакета в сессии (для аутентификации он всегда 1)
+  PID = Pid, %% идентификатор пакета или просто номео пакета в сессии (для аутентификации он всегда 1)
   {ok, TransportData} = egts_transport:pack([RecordData, PID]),
-
 %%     gen_server:call(egts_work,{egts_auth,#auth{tid = Login, imei = IMEI}}),
 %%   RecordData.
   TransportData.
@@ -57,17 +56,17 @@ auth([Login, IMEI]) ->
 auth_disp([]) ->
   ok.
 
-pos_data([]) ->
-%%   {ok, SubType, Data} = egts_service_teledata:term_identity(#auth{tid = Login, imei = IMEI}),
-%%   NumberRecord = 1, %% порядковый номер строки
-%%   {ok, RecordData} = egts_service:auth_pack([Data, NumberRecord, SubType]),
-%%   PID = 2, %% идентификатор пакета или просто номео пакета в сессии (для аутентификации он всегда 1)
-%%   {ok, TransportData} = egts_transport:pack([RecordData, PID])
-ok.
+pos_data({Pid, [Time, Lat, Lon, Speed, Dir]}) ->
+  {ok, SubType, Data} = egts_service_teledata:pos_data(#pos_data{ntm = Time, lat = Lat, long = Lon, spd = Speed, dir = Dir}),
+  NumberRecord = 1, %% порядковый номер строки
+  {ok, RecordData} = egts_service:auth_pack([Data, NumberRecord, SubType]),
+  PID = Pid, %% идентификатор пакета или просто номео пакета в сессии (для аутентификации он всегда 1)
+  {ok, TransportData} = egts_transport:pack([RecordData, PID]),
+  TransportData.
 
 
 %%  получили товет от сервера и обрабатываем
-response(Data) ->
+response({Pid, Data}) ->
   case egts_transport:response(Data) of
     {error, Code} -> {error, egts_utils:result(Code)};
     {ok, Record} ->
@@ -75,25 +74,27 @@ response(Data) ->
         is_record(Record, egts_pt_response) ->
 %%           пришел ответ на транспортный пакет
 %%           помечаем где надо что пакет они приняли и ждем результата обработки
-          {Record#egts_pt_response.rpid, Record#egts_pt_response.pr}
+          {response, Record#egts_pt_response.rpid, Record#egts_pt_response.pr}
 %%             zaglushka
       ;
         is_record(Record, egts_pt_appdata) ->
 %%           пришел пакет данных с сервера надо им ответить что мы пакет приняли и обработать пакет (скорее всего с ответами)
 %%           данные для ответа на сервер
-%%           RecordData = Record#egts_pt_appdata.response,
-%%           PID = 2, %% порядковй номер пакета для данной сессии PID_old + 1
-%%           {ok, TransportDataResponse} = egts_transport:pack([RecordData, PID,?EGTS_PT_RESPONSE]),
+          RecordData = Record#egts_pt_appdata.response,
+          PID = Pid, %% порядковй номер пакета для данной сессии PID_old + 1
+          {ok, TransportDataResponse} = egts_transport:pack([RecordData, PID, ?EGTS_PT_RESPONSE]),
 %%           данные для обработки  Record#egts_pt_appdata.record_list,
           %% получаем список строк записей
-          egts_service:pars_for_info(Record#egts_pt_appdata.record_list)
+          {app_data, TransportDataResponse, Record#egts_pt_appdata.record_list}
 %%          , zaglushka
       ;
-        true -> zaglushka
+        true -> {un,Data}
       end
   end.
 
 test() ->
-  Data = auth([11, 111111]),
-  {response(Data), Data}.
+  Data = pos_data([1416635639, 52.252659, 104.343803, 50.00, 100]),
+  Data
+%%   egts_service_teledata:packet_data(#pos_data{ntm = 1416635639, lat = 52.252659, long = 104.343803, spd =  50.00, dir = 100})
+.
 
