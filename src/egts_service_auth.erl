@@ -16,6 +16,7 @@
 
 %% --------------------------------------------------------------------
 -define(EGTS_SR_RECORD_RESPONSE, 0).
+-define(EGTS_SR_RESULT_CODE, 9).
 
 %% Подзапись применяется для
 %% осуществления подтверждения
@@ -152,6 +153,9 @@ response(?EGTS_SR_RECORD_RESPONSE, Data) ->
   <<CRN:?USHORT, RST:?BYTE>> = Data,
   {CRN, RST, egts_utils:result(RST)};
 response(?EGTS_SR_TERM_IDENTITY, _Data) ->
-  {term_identy};
-response(_, _Data) ->
-  {xz}.
+  {term_identy, _Data};
+response(?EGTS_SR_RESULT_CODE, Data) ->
+  <<RCD:?BYTE>> = Data,
+  {result_code, RCD};
+response(_, Data) ->
+  {Data}.
