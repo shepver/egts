@@ -141,5 +141,5 @@ sub_check(Service, [Record | T], List) ->
            ?EGTS_TELEDATA_SERVICE ->
              egts_service_teledata:response(Record#service_sub_record.srt, Record#service_sub_record.srd)
          end,
-  R = {egts_utils:erecord(Service, Record#service_sub_record.srt), Data},
+  R = {egts_utils:service(Service), egts_utils:erecord(Service, Record#service_sub_record.srt), Data},
   sub_check(Service, T, [R | List]).

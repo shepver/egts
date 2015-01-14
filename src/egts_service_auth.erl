@@ -150,7 +150,7 @@ packet_data(_, _, Data, _) ->
 
 response(?EGTS_SR_RECORD_RESPONSE, Data) ->
   <<CRN:?USHORT, RST:?BYTE>> = Data,
-  {CRN, RST};
+  {CRN, RST, egts_utils:result(RST)};
 response(?EGTS_SR_TERM_IDENTITY, _Data) ->
   {term_identy};
 response(_, _Data) ->

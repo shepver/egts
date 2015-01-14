@@ -35,53 +35,83 @@
 ]).
 
 
-service(1) -> egts_auth_service;
-service(2) -> egts_teledata_service.
-erecord(_, 0) -> egts_sr_record_responce;
-erecord(1, 1) -> egts_sr_term_identity;
-erecord(_, _) -> netu.
+service(1) -> {1, 'EGTS_AUTH_SERVICE'};
+service(2) -> {2, 'EGTS_TELEDATA_SERVICE'};
+service(4) -> {4, 'EGTS_COMMANDS_SERVICE'};
+service(9) -> {9, 'EGTS_FIRMWARE_SERVICE'};
+service(10) -> {10, 'EGTS_ECALL_SERVICE'};
+service(Num) -> {Num, unknown_code_service}.
+
+erecord(_, 0) -> {0, 'EGTS_SR_RECORD_RESPONSE'};
+%% egts_auth_service
+erecord(1, 1) -> {1, 'EGTS_SR_TERM_IDENTITY'};
+erecord(1, 2) -> {2, 'EGTS_SR_MODULE_DATA'};
+erecord(1, 3) -> {3, 'EGTS_SR_VEHICLE_DATA'};
+erecord(1, 6) -> {6, 'EGTS_SR_AUTH_PARAMS'};
+erecord(1, 7) -> {7, 'EGTS_SR_AUTH_INFO'};
+erecord(1, 8) -> {8, 'EGTS_SR_SERVICE_INFO'};
+erecord(1, 9) -> {9, 'EGTS_SR_RESULT_CODE'};
+%% egts_teledata_service
+erecord(2, 16) -> {16, 'EGTS_SR_POS_DATA'};
+erecord(2, 17) -> {17, 'EGTS_SR_EXT_POS_DATA'};
+erecord(2, 18) -> {18, 'EGTS_SR_AD_SENSORS_DATA'};
+erecord(2, 19) -> {19, 'EGTS_SR_COUNTERS_DATA'};
+erecord(2, 20) -> {20, 'EGTS_SR_STATE_DATA'};
+erecord(2, 22) -> {22, 'EGTS_SR_LOOPIN_DATA'};
+erecord(2, 23) -> {23, 'EGTS_SR_ABS_DIG_SENS_DATA'};
+erecord(2, 24) -> {24, 'EGTS_SR_ABS_AN_SENS_DATA'};
+erecord(2, 25) -> {25, 'EGTS_SR_ABS_CNTR_DATA'};
+erecord(2, 26) -> {26, 'EGTS_SR_ABS_LOOPIN_DATA'};
+erecord(2, 27) -> {27, 'EGTS_SR_LIQUID_LEVEL_SENSOR'};
+erecord(2, 28) -> {28, 'EGTS_SR_PASSENGERS_COUNTERS'};
+
+erecord(_, Num) -> {Num, unknown_record}.
 
 
-result(0) -> 'EGTS_PC_OK'; %%  успешно обработано
-result(1) -> 'EGTS_PC_IN_PROGRESS'; %%  в процессе обработки
-result(128) -> 'EGTS_PC_UNS_PROTOCOL'; %%  неподдерживаемый протокол
-result(129) -> 'EGTS_PC_DECRYPT_ERROR'; %%  ошибка декодирования
-result(130) -> 'EGTS_PC_PROC_DENIED'; %%  обработка запрещена
-result(131) -> 'EGTS_PC_INC_HEADERFORM'; %%  неверный формат заголовка
-result(132) -> 'EGTS_PC_INC_DATAFORM'; %%  неверный формат данных
-result(133) -> 'EGTS_PC_UNS TYPE'; %%  неподдерживаемый тип
-result(134) -> 'EGTS_PC_NOTEN_PARAMS'; %%  неверное количество параметров
-result(135) -> 'EGTS_PC_DBL_PROC'; %%  попытка повторной обработки
-result(136) -> 'EGTS_PC_PROC_SRC_DENIED'; %%  обработка данных от источника запрещена
-result(137) -> 'EGTS_PC_HEADERCRC_ERROR'; %%  ошибка контрольной суммы заголовка
-result(138) -> 'EGTS_PC_DATACRC_ERROR'; %%  ошибка контрольной суммы данных
-result(139) -> 'EGTS_PC_INVDATALEN'; %%  некорректная длина данных
-result(140) -> 'EGTS_PC_ROUTE_NFOUND'; %%  маршрут не найден
-result(141) -> 'EGTS_PC_ROUTE_CLOSED'; %%  маршрут закрыт
-result(142) -> 'EGTS_PC_ROUTE_DENIED'; %%  маршрутизация запрещена
-result(143) -> 'EGTS_PC_INVADDR'; %%  неверный адрес
-result(144) -> 'EGTS_PC_TTLEXPIRED'; %%  превышено количество ретрансляции данных
-result(145) -> 'EGTS_PC_NO_ACK'; %%  нет подтверждения
-result(146) -> 'EGTS_PC_OBJ_NFOUND'; %%  объект не найден
-result(147) -> 'EGTS_PC_EVNT_NFOUND'; %%  событие не найдено
-result(148) -> 'EGTS_PC_SRVC_NFOUND'; %%  сервис не найден
-result(149) -> 'EGTS_PC_SRVC_DENIED'; %%  сервис запрещён
-result(150) -> 'EGTS_PC_SRVC_UNKN'; %%  неизвестный тип сервиса
-result(151) -> 'EGTS_PC_AUTH_DENIED'; %%  авторизация запрещена
-result(152) -> 'EGTS_PC_ALREADY_EXISTS'; %%  объект уже существует
-result(153) -> 'EGTS_PC_ID_NFOUND'; %%  идентификатор не найден
-result(154) -> 'EGTS_PC_INC_DATETIME'; %%  неправильная дата и время
-result(155) -> 'EGTS_PC_IO_ERROR'; %%  ошибка ввода/вывода
-result(156) -> 'EGTS_PC_NO_RES_AVAIL'; %%  недостаточно ресурсов
-result(157) -> 'EGTS_PC_MODULE_FAULT'; %%  внутренний сбой модуля
-result(158) -> 'EGTS_PC_MODULE_PWR_FLT'; %%  сбой в работе цепи питания модуля
-result(159) -> 'EGTS_PC_MODULE_PROC_FLT'; %%  сбой в работе микроконтроллера модуля
-result(160) -> 'EGTS_PC_MODULE_SW_FLT'; %%  сбой в работе программы модуля
-result(161) -> 'EGTS_PC_MODULE_FW_FLT'; %%  сбой в работе внутреннего ПО модуля
-result(162) -> 'EGTS_PC_MODULE_IO_FLT'; %%  сбой в работе блока ввода/вывода модуля
-result(163) -> 'EGTS_PC_MODULE_MEM_FLT'; %%  сбой в работе внутренней памяти модуля
-result(164) -> 'EGTS_PC_TEST_FAILED'; %%  тест не пройден
-result(_) -> 'unknown_code'. %%  тест не пройден
+result(0) -> {0, 'EGTS_PC_OK', "	успешно обработано	"};
+result(1) -> {1, 'EGTS_PC_IN_PROGRESS', "	в процессе обработки	"};
+result(128) -> {128, 'EGTS_PC_UNS_PROTOCOL', "	неподдерживаемый протокол	"};
+result(129) -> {129, 'EGTS_PC_DECRYPT_ERROR', "	ошибка декодирования	"};
+result(130) -> {130, 'EGTS_PC_PROC_DENIED', "	обработка запрещена	"};
+result(131) -> {131, 'EGTS_PC_INC_HEADERFORM', "	неверный формат заголовка	"};
+result(132) -> {132, 'EGTS_PC_INC_DATAFORM', "	неверный формат данных	"};
+result(133) -> {133, 'EGTS_PC_UNS TYPE', "	неподдерживаемый тип	"};
+result(134) -> {134, 'EGTS_PC_NOTEN_PARAMS', "	неверное количество параметров	"};
+result(135) -> {135, 'EGTS_PC_DBL_PROC', "	попытка повторной обработки	"};
+result(136) -> {136, 'EGTS_PC_PROC_SRC_DENIED', "	обработка данных от источника запрещена	"};
+result(137) -> {137, 'EGTS_PC_HEADERCRC_ERROR', "	ошибка контрольной суммы заголовка	"};
+result(138) -> {138, 'EGTS_PC_DATACRC_ERROR', "	ошибка контрольной суммы данных	"};
+result(139) -> {139, 'EGTS_PC_INVDATALEN', "	некорректная длина данных	"};
+result(140) -> {140, 'EGTS_PC_ROUTE_NFOUND', "	маршрут не найден	"};
+result(141) -> {141, 'EGTS_PC_ROUTE_CLOSED', "	маршрут закрыт	"};
+result(142) -> {142, 'EGTS_PC_ROUTE_DENIED', "	маршрутизация запрещена	"};
+result(143) -> {143, 'EGTS_PC_INVADDR', "	неверный адрес	"};
+result(144) -> {144, 'EGTS_PC_TTLEXPIRED', "	превышено количество ретрансляции данных	"};
+result(145) -> {145, 'EGTS_PC_NO_ACK', "	нет подтверждения	"};
+result(146) -> {146, 'EGTS_PC_OBJ_NFOUND', "	объект не найден	"};
+result(147) -> {147, 'EGTS_PC_EVNT_NFOUND', "	событие не найдено	"};
+result(148) -> {148, 'EGTS_PC_SRVC_NFOUND', "	сервис не найден	"};
+result(149) -> {149, 'EGTS_PC_SRVC_DENIED', "	сервис запрещён	"};
+result(150) -> {150, 'EGTS_PC_SRVC_UNKN', "	неизвестный тип сервиса	"};
+result(151) -> {151, 'EGTS_PC_AUTH_DENIED', "	авторизация запрещена	"};
+result(152) -> {152, 'EGTS_PC_ALREADY_EXISTS', "	объект уже существует	"};
+result(153) -> {153, 'EGTS_PC_ID_NFOUND', "	идентификатор не найден	"};
+result(154) -> {154, 'EGTS_PC_INC_DATETIME', "	неправильная дата и время	"};
+result(155) -> {155, 'EGTS_PC_IO_ERROR', "	ошибка ввода/вывода	"};
+result(156) -> {156, 'EGTS_PC_NO_RES_AVAIL', "	недостаточно ресурсов	"};
+result(157) -> {157, 'EGTS_PC_MODULE_FAULT', "	внутренний сбой модуля	"};
+result(158) -> {158, 'EGTS_PC_MODULE_PWR_FLT', "	сбой в работе цепи питания модуля	"};
+result(159) -> {159, 'EGTS_PC_MODULE_PROC_FLT', "	сбой в работе микроконтроллера модуля	"};
+result(160) -> {160, 'EGTS_PC_MODULE_SW_FLT', "	сбой в работе программы модуля	"};
+result(161) -> {161, 'EGTS_PC_MODULE_FW_FLT', "	сбой в работе внутреннего ПО модуля	"};
+result(162) -> {162, 'EGTS_PC_MODULE_IO_FLT', "	сбой в работе блока ввода/вывода модуля	"};
+result(163) -> {163, 'EGTS_PC_MODULE_MEM_FLT', "	сбой в работе внутренней памяти модуля	"};
+result(164) -> {164, 'EGTS_PC_TEST_FAILED', "	тест не пройден	"};
+result(Num) -> {Num, 'unknown_code', "неизвесный код"}. %%  тест не пройден
+
+
+
+
 
 
 get_time() ->
