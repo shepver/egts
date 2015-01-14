@@ -65,9 +65,9 @@ packet_data(PosData) ->
 
 response(?EGTS_SR_RECORD_RESPONSE, Data) ->
   <<CRN:?USHORT, RST:?BYTE>> = Data,
-  {CRN, RST};
+  {CRN, RST, egts_utils:result(RST)};
 response(?EGTS_SR_RESULT_CODE, Data) ->
   <<RCD:?BYTE>> = Data,
-  {result_code, RCD};
+  {result_code, egts_utils:result(RCD)};
 response(_, Data) ->
   {Data}.

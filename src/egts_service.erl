@@ -71,7 +71,6 @@ sub_record_pack([Data, Type]) ->
 parse(Data) ->
   parse(Data, []).
 parse(Data, List) ->
-
   <<RL:?USHORT
   , RN:?USHORT
   , SSOD:1, RSOD:1, GRP:1, RPP:2, TMFE:1, EVFE:1, OBFE:1
