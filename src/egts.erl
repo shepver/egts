@@ -74,7 +74,7 @@ response({Pid, Data}) ->
         is_record(Record, egts_pt_response) ->
 %%           пришел ответ на транспортный пакет
 %%           помечаем где надо что пакет они приняли и ждем результата обработки
-          {response, Record#egts_pt_response.rpid, Record#egts_pt_response.pr}
+          {response, Record#egts_pt_response.rpid, Record#egts_pt_response.pr, Record#egts_pt_response.record_list}
 %%             zaglushka
       ;
         is_record(Record, egts_pt_appdata) ->
@@ -88,7 +88,7 @@ response({Pid, Data}) ->
           {app_data, TransportDataResponse, Record#egts_pt_appdata.record_list}
 %%          , zaglushka
       ;
-        true -> {un,Data}
+        true -> {un, Data}
       end
   end.
 
