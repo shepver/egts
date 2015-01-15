@@ -21,7 +21,7 @@
 -export([to_float/1]).
 -export([to_double/1]).
 -export([result/1]).
-
+-export([sign/1]).
 -export([service/1]).
 -export([erecord/2]).
 -export([get_time/0, get_time/1]).
@@ -110,10 +110,6 @@ result(164) -> {164, 'EGTS_PC_TEST_FAILED', "	тест не пройден	"};
 result(Num) -> {Num, 'unknown_code', "неизвесный код"}. %%  тест не пройден
 
 
-
-
-
-
 get_time() ->
   {Mega, Sec, _} = now(),
   Mega * 1000000 + Sec - 63429523200
@@ -121,6 +117,12 @@ get_time() ->
 get_time(Time) ->
   Time - 63429523200
 .
+
+sign(D) when (D > 0) -> 0;
+sign(_D) -> 1.
+
+
+
 
 data_to_bin(Data, _Size) when (Data == null) ->
   {empty, "Data is null."};
