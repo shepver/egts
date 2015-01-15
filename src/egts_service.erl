@@ -67,7 +67,8 @@ sub_record_pack([Data, Type]) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
+parse(<<>>) ->
+  [];
 parse(Data) ->
   parse(Data, []).
 parse(Data, List) ->
@@ -120,7 +121,8 @@ sub_record_parse(<<SRT:?BYTE, SRL:?USHORT, SRD:SRL/binary-unit:8, Other/binary>>
   sub_record_parse(Other, [#service_sub_record{srt = SRT, srl = SRL, srd = SRD} | List]).
 
 
-
+pars_for_info(<<>>) ->
+  [];
 pars_for_info(Data) ->
   ListRecord = parse(Data),
   check(ListRecord, [])
