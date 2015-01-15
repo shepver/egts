@@ -12,7 +12,7 @@
 -include("../include/egts_types.hrl").
 -include("../include/egts_record.hrl").
 
--export([pack/1, auth_pack/1, parse/1, response_rd/2, pars_for_info/1]).
+-export([pack/1, auth_pack/1, posdata_pack/1, parse/1, response_rd/2, pars_for_info/1]).
 %% API
 -export([]).
 
@@ -35,8 +35,13 @@ response_rd(Number, Status) ->
   RST = Status,
   <<CRN:?USHORT, RST:?BYTE>>.
 
+
 auth_pack([Data, Number, SubType]) ->
   pack([Data, Number, ?EGTS_AUTH_SERVICE, SubType]).
+
+
+posdata_pack([Data, Number, SubType]) ->
+  pack([Data, Number, ?EGTS_TELEDATA_SERVICE, SubType]).
 
 pack([Data, Number, Type, SubType]) ->
   {ok, SubData} = sub_record_pack([Data, SubType]),

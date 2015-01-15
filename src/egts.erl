@@ -59,7 +59,7 @@ auth_disp([]) ->
 pos_data({Pid, [Time, Lat, Lon, Speed, Dir]}) ->
   {ok, SubType, Data} = egts_service_teledata:pos_data(#pos_data{ntm = Time, lat = Lat, long = Lon, spd = Speed, dir = Dir}),
   NumberRecord = 1, %% порядковый номер строки
-  {ok, RecordData} = egts_service:auth_pack([Data, NumberRecord, SubType]),
+  {ok, RecordData} = egts_service:posdata_pack([Data, NumberRecord, SubType]),
   PID = Pid, %% идентификатор пакета или просто номео пакета в сессии (для аутентификации он всегда 1)
   {ok, TransportData} = egts_transport:pack([RecordData, PID]),
   TransportData.
