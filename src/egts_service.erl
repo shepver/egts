@@ -11,8 +11,9 @@
 
 -include("../include/egts_types.hrl").
 -include("../include/egts_record.hrl").
+-include("../include/egts_code.hrl").
 
--export([pack/1, auth_pack/1, posdata_pack/1, parse/1, response_rd/2, pars_for_info/1]).
+-export([pack/1, auth_pack/1, posdata_pack/1, parse/1, response_rd/2, pars_for_info/1, pars_for_responce/1]).
 %% API
 -export([]).
 
@@ -132,6 +133,7 @@ pars_for_info(Data) ->
   ListRecord = parse(Data),
   check(ListRecord, [])
 .
+
 check([], List) ->
   List;
 check([ListR | T], List) ->
@@ -149,3 +151,18 @@ sub_check(Service, [Record | T], List) ->
          end,
   R = {egts_utils:service(Service), egts_utils:erecord(Service, Record#service_sub_record.srt), Data},
   sub_check(Service, T, [R | List]).
+
+
+pars_for_responce(Data) ->
+  ListRecord = parse(Data),
+  {ok, checkr(ListRecord, <<>>, 1)}.
+
+
+checkr([], Data, _) ->
+  Data;
+checkr([ListR | T], Data, Number) ->
+  RN = ListR#service_record.rn,
+  Status = ?EGTS_PC_OK,
+  {ok, DataN} = pack([<<RN:?USHORT, Status:?BYTE>>, Number, ListR#service_record.rst, ?EGTS_SR_RECORD_RESPONSE]),
+  checkr(T, <<Data/binary, DataN/binary>>, Number + 1).
+

@@ -132,7 +132,8 @@ response(Data) ->
       <<RPID:?USHORT, PR:?BYTE, Other/binary>> = SFRD,
       {ok, #egts_pt_response{rpid = RPID, pr = PR, record_list = Other}};
     {ok, {?EGTS_PT_APPDATA, PID, SFRD}} ->
-      {ok, #egts_pt_appdata{record_list = SFRD, response = <<PID:?USHORT, ?EGTS_PC_OK:?BYTE, SFRD/binary>>}};
+      {ok, RData} = egts_service:pars_for_responce(SFRD),
+      {ok, #egts_pt_appdata{record_list = SFRD, response = <<PID:?USHORT, ?EGTS_PC_OK:?BYTE, RData/binary>>}};
     All -> All
   end.
 

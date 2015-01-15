@@ -16,6 +16,7 @@
 
 %% --------------------------------------------------------------------
 -define(EGTS_SR_RECORD_RESPONSE, 0).
+-define(EGTS_SR_TERM_IDENTITY, 1).
 -define(EGTS_SR_RESULT_CODE, 9).
 
 %% Подзапись применяется для
@@ -33,7 +34,6 @@
 
 %% ---------------------------------------------------------------------
 
--define(EGTS_SR_TERM_IDENTITY, 1).
 
 %% Подзапись используется АС при
 %% запросе авторизации на
@@ -132,22 +132,6 @@ packet_data(Auth, 8, Header, Option) ->
 packet_data(_, _, Data, _) ->
   Data.
 
-
-%% data(Data) ->
-%%   <<
-%%   TDI:?UINT,
-%%   MNE:1, BSE:1, NIDE:1, SSRA:1, LNGSE:1, IMSIE:1, IMEIE:1, HDIDE:1,
-%%   HDID:?USHORT,
-%%   IMEI:120/?STRING,
-%%   IMSI:128/?STRING,
-%%   LNGC:24/?STRING,
-%%   NID:24/?BINARY,
-%%   BS:?USHORT,
-%%   MSISDN:120/?STRING
-%%   >> = Data,
-%%
-%%   <<_:4, MCC:10, MNC:10>> = NID,
-%%   ok.
 
 response(?EGTS_SR_RECORD_RESPONSE, Data) ->
   <<CRN:?USHORT, RST:?BYTE>> = Data,

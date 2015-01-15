@@ -67,12 +67,12 @@ erecord(2, 28) -> {28, 'EGTS_SR_PASSENGERS_COUNTERS'};
 
 erecord(_, Num) -> {Num, unknown_record}.
 
-
-result(0) -> {0, 'EGTS_PC_OK', "	успешно обработано	"};
-result(1) -> {1, 'EGTS_PC_IN_PROGRESS', "	в процессе обработки	"};
-result(128) -> {128, 'EGTS_PC_UNS_PROTOCOL', "	неподдерживаемый протокол	"};
-result(129) -> {129, 'EGTS_PC_DECRYPT_ERROR', "	ошибка декодирования	"};
-result(130) -> {130, 'EGTS_PC_PROC_DENIED', "	обработка запрещена	"};
+%% я не упроротый просто так проще
+result(0) -> {0, 'EGTS_PC_OK', "uspechno obrabotano"};
+result(1) -> {1, 'EGTS_PC_IN_PROGRESS', "v processe obrabotky"};
+result(128) -> {128, 'EGTS_PC_UNS_PROTOCOL', "nepodderzivaemiy protocol"};
+result(129) -> {129, 'EGTS_PC_DECRYPT_ERROR', "oshibka dekodirovanija"};
+result(130) -> {130, 'EGTS_PC_PROC_DENIED', "obrabotka zapreshena"};
 result(131) -> {131, 'EGTS_PC_INC_HEADERFORM', "	неверный формат заголовка	"};
 result(132) -> {132, 'EGTS_PC_INC_DATAFORM', "	неверный формат данных	"};
 result(133) -> {133, 'EGTS_PC_UNS TYPE', "	неподдерживаемый тип	"};
