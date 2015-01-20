@@ -11,12 +11,13 @@
 -include("../include/egts_types.hrl").
 -include("../include/egts_record.hrl").
 %% API
--export([term_identity/1]).
+-export([term_identity/1, dispatcher_identity/1]).
 -export([response/2]).
 
 %% --------------------------------------------------------------------
 -define(EGTS_SR_RECORD_RESPONSE, 0).
 -define(EGTS_SR_TERM_IDENTITY, 1).
+-define(EGTS_SR_DISPATCHER_IDENTITY, 5).
 -define(EGTS_SR_RESULT_CODE, 9).
 
 %% Подзапись применяется для
@@ -39,6 +40,11 @@
 %% запросе авторизации на
 %% телематическую платформу и
 %% содержит учетные данные АС
+
+
+dispatcher_identity({Type, Did}) ->
+  {ok, ?EGTS_SR_DISPATCHER_IDENTITY, <<Type:?BYTE, Did:?UINT>>}
+.
 
 -spec(term_identity(Auth :: #auth{}) ->
   {ok, Data :: binary} | {error, Reason :: term()}).

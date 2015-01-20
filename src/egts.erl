@@ -53,13 +53,20 @@ auth({Pid, [Login, IMEI, Disp]}) ->
 %%   RecordData.
   TransportData.
 
-auth_disp([]) ->
-  ok.
+auth_disp({PID, OID, Did}) ->
+  {ok, SubType, Data} = egts_service_auth:dispatcher_identity({0, Did}),
+  NumberRecord = 1, %% порядковый номер строки
+  {ok, RecordData} = egts_service:auth_pack([Data, NumberRecord, SubType, OID]),
+%%   PID = Pid, %% идентификатор пакета или просто номео пакета в сессии (для аутентификации он всегда 1)
+  {ok, TransportData} = egts_transport:pack([RecordData, PID]),
+%%     gen_server:call(egts_work,{egts_auth,#auth{tid = Login, imei = IMEI}}),
+%%   RecordData.
+  TransportData.
 
-pos_data({Pid, [Time, Lat, Lon, Speed, Dir]}) ->
+pos_data({Pid, OID, [Time, Lat, Lon, Speed, Dir]}) ->
   {ok, SubType, Data} = egts_service_teledata:pos_data(#pos_data{ntm = Time, lat = Lat, long = Lon, spd = Speed, dir = Dir}),
   NumberRecord = 1, %% порядковый номер строки
-  {ok, RecordData} = egts_service:posdata_pack([Data, NumberRecord, SubType]),
+  {ok, RecordData} = egts_service:posdata_pack([Data, NumberRecord, SubType, OID]),
   PID = Pid, %% идентификатор пакета или просто номео пакета в сессии (для аутентификации он всегда 1)
   {ok, TransportData} = egts_transport:pack([RecordData, PID]),
   TransportData.

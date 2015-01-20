@@ -47,6 +47,7 @@ erecord(_, 0) -> {0, 'EGTS_SR_RECORD_RESPONSE'};
 erecord(1, 1) -> {1, 'EGTS_SR_TERM_IDENTITY'};
 erecord(1, 2) -> {2, 'EGTS_SR_MODULE_DATA'};
 erecord(1, 3) -> {3, 'EGTS_SR_VEHICLE_DATA'};
+erecord(1, 5) -> {5, 'EGTS_SR_DISPATCHER_IDENTITY'};
 erecord(1, 6) -> {6, 'EGTS_SR_AUTH_PARAMS'};
 erecord(1, 7) -> {7, 'EGTS_SR_AUTH_INFO'};
 erecord(1, 8) -> {8, 'EGTS_SR_SERVICE_INFO'};

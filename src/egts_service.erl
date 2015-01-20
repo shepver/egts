@@ -37,19 +37,21 @@ response_rd(Number, Status) ->
   <<CRN:?USHORT, RST:?BYTE>>.
 
 
-auth_pack([Data, Number, SubType]) ->
-  pack([Data, Number, ?EGTS_AUTH_SERVICE, SubType]).
+auth_pack([Data, Number, SubType, OID]) ->
+  pack([Data, Number, ?EGTS_AUTH_SERVICE, SubType, OID]).
 
 
-posdata_pack([Data, Number, SubType]) ->
-  pack([Data, Number, ?EGTS_TELEDATA_SERVICE, SubType]).
+posdata_pack([Data, Number, SubType, OID]) ->
+  pack([Data, Number, ?EGTS_TELEDATA_SERVICE, SubType, OID]).
 
-pack([Data, Number, Type, SubType]) ->
+%% pack([Data, Number, Type, SubType]) ->
+%%   pack([Data, Number, Type, SubType, 1]);
+pack([Data, Number, Type, SubType, Oid]) ->
   {ok, SubData} = sub_record_pack([Data, SubType]),
   RL = byte_size(SubData),
   RN = Number,
   SSOD = 0, RSOD = 0, GRP = 0, RPP = 2#01, TMFE = 0, EVFE = 0, OBFE = 1,
-  OID = 1,
+  OID = Oid,
 %%   EVID,
 %%   TM,
   SST = Type,
