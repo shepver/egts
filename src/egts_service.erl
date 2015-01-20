@@ -49,6 +49,7 @@ posdata_pack([Data, Number, SubType, OID]) ->
 pack([Data, Number, Type, SubType, Oid]) ->
   {ok, SubData} = sub_record_pack([Data, SubType]),
   RL = byte_size(SubData),
+%%   error_logger:error_msg(" size ~p ~p ~p", [RL, SubData, Oid]),
   RN = Number,
   SSOD = 0, RSOD = 0, GRP = 0, RPP = 2#01, TMFE = 0, EVFE = 0, OBFE = 1,
   OID = Oid,
@@ -155,16 +156,16 @@ sub_check(Service, [Record | T], List) ->
   sub_check(Service, T, [R | List]).
 
 
-pars_for_responce(Data) ->
+pars_for_responce({Data, OID}) ->
   ListRecord = parse(Data),
-  {ok, checkr(ListRecord, <<>>, 1)}.
+  {ok, checkr(ListRecord, <<>>, 1, OID)}.
 
 
-checkr([], Data, _) ->
+checkr([], Data, _, _) ->
   Data;
-checkr([ListR | T], Data, Number) ->
+checkr([ListR | T], Data, Number, OID) ->
   RN = ListR#service_record.rn,
   Status = ?EGTS_PC_OK,
-  {ok, DataN} = pack([<<RN:?USHORT, Status:?BYTE>>, Number, ListR#service_record.rst, ?EGTS_SR_RECORD_RESPONSE, ListR#service_record.oid]),
-  checkr(T, <<Data/binary, DataN/binary>>, Number + 1).
+  {ok, DataN} = pack([<<RN:?USHORT, Status:?BYTE>>, Number, ListR#service_record.rst, ?EGTS_SR_RECORD_RESPONSE, OID]),
+  checkr(T, <<Data/binary, DataN/binary>>, Number + 1, OID).
 
