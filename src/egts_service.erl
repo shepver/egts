@@ -165,6 +165,6 @@ checkr([], Data, _) ->
 checkr([ListR | T], Data, Number) ->
   RN = ListR#service_record.rn,
   Status = ?EGTS_PC_OK,
-  {ok, DataN} = pack([<<RN:?USHORT, Status:?BYTE>>, Number, ListR#service_record.rst, ?EGTS_SR_RECORD_RESPONSE]),
+  {ok, DataN} = pack([<<RN:?USHORT, Status:?BYTE>>, Number, ListR#service_record.rst, ?EGTS_SR_RECORD_RESPONSE, ListR#service_record.oid]),
   checkr(T, <<Data/binary, DataN/binary>>, Number + 1).
 
