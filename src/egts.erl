@@ -73,7 +73,7 @@ pos_data({Pid, OID, [Time, Lat, Lon, Speed, Dir]}) ->
 
 
 %%  получили товет от сервера и обрабатываем
-response({Pid, Data}) ->
+response({Pid, OID, Data}) ->
   case egts_transport:response(Data) of
     {error, Code} -> {error, egts_utils:result(Code)};
     {ok, Record} ->
@@ -89,7 +89,7 @@ response({Pid, Data}) ->
 %%           данные для ответа на сервер
           RecordData = Record#egts_pt_appdata.response,
           PID = Pid, %% порядковй номер пакета для данной сессии PID_old + 1
-          {ok, TransportDataResponse} = egts_transport:pack([RecordData, PID, ?EGTS_PT_RESPONSE]),
+          {ok, TransportDataResponse} = egts_transport:pack([RecordData, PID, ?EGTS_PT_RESPONSE, OID]),
 %%           данные для обработки  Record#egts_pt_appdata.record_list,
           %% получаем список строк записей
           {app_data, TransportDataResponse, Record#egts_pt_appdata.record_list}
