@@ -204,15 +204,39 @@ prepare_data([{Action, Time, Lat, Lon, Speed, Cource, Mv} | T], {_, Data}) ->
   {noreply, NewState :: #state{}, timeout() | hibernate} |
   {stop, Reason :: term(), NewState :: #state{}}).
 
-handle_info(run, State) ->
-  Data = egts:auth([1, 123456789012345]),
-  gen_tcp:send(State#state.socket, Data),
-  error_logger:info_msg("Send  ~p .~n", [Data]),
+handle_info({pos_data, {Imei, List}}, State) ->
+  gen_server:cast(self(), {pos_data, {Imei, List}}),
   {noreply, State};
 
-handle_info({tcp, _Socket, Data}, State) ->
-  Result = egts:response(Data),
-  error_logger:info_msg("Result ~p .~n", [Result]),
+handle_info({tcp, _Socket, Data}, #state{pid = Pid, socket = Socket} = State) ->
+  NewPid = if
+             Pid == 65535 -> 0;
+             true -> Pid + 1
+           end,
+  case egts:response({NewPid, 0, Data}) of
+    {response, RPID, STATUS, SRD_LIST} ->
+      error_logger:info_msg("Respone rpid ~p status ~p  r_list ~p.~n", [RPID, STATUS, egts_service:pars_for_info(SRD_LIST)]),
+      {noreply, State}
+  ;
+    {app_data, TransportDataResponse, DataList} ->
+      gen_tcp:send(Socket, TransportDataResponse),
+      error_logger:info_msg("Result list ~p .~n", [egts_service:pars_for_info(DataList)]),
+      {noreply, State#state{pid = NewPid}};
+    {un, Data} ->
+      error_logger:info_msg("UNResult ~p .~n", [Data]),
+      {noreply, State}
+  end;
+
+handle_info({tcp_closed, _Socket}, State) ->
+  gen_server:cast(self(), relogin),
+  {noreply, State};
+
+handle_info({connect, Host, Port, DID}, State) ->
+  gen_server:cast(self(), {connect, Host, Port, DID}),
+  {noreply, State};
+
+handle_info(relogin, State) ->
+  gen_server:cast(self(), relogin),
   {noreply, State};
 
 handle_info(_Info, State) ->

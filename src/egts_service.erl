@@ -51,22 +51,37 @@ pack([Data, Number, Type, SubType, Oid]) ->
   RL = byte_size(SubData),
 %%   error_logger:error_msg(" size ~p ~p ~p", [RL, SubData, Oid]),
   RN = Number,
-  SSOD = 0, RSOD = 0, GRP = 0, RPP = 2#01, TMFE = 0, EVFE = 0, OBFE = 1,
-  OID = Oid,
-%%   EVID,
-%%   TM,
+  SSOD = 0, RSOD = 0, GRP = 0, RPP = 2#01, TMFE = 0, EVFE = 0,
   SST = Type,
   RST = Type,
-  NewData =
-    <<RL:?USHORT,
-    RN:?USHORT,
-    SSOD:1, RSOD:1, GRP:1, RPP:2, TMFE:1, EVFE:1, OBFE:1,
-    OID:?UINT,
+
 %%   EVID,
 %%   TM,
-    SST:?BYTE,
-    RST:?BYTE,
-    SubData/binary>>,
+  NewData = if
+              is_integer(Oid) and (Oid > 0) ->
+                OBFE = 1,
+                OID = Oid,
+                <<RL:?USHORT,
+                RN:?USHORT,
+                SSOD:1, RSOD:1, GRP:1, RPP:2, TMFE:1, EVFE:1, OBFE:1,
+                OID:?UINT,
+%%   EVID,
+%%   TM,
+                SST:?BYTE,
+                RST:?BYTE,
+                SubData/binary>>;
+              true ->
+                OBFE = 0,
+                <<RL:?USHORT,
+                RN:?USHORT,
+                SSOD:1, RSOD:1, GRP:1, RPP:2, TMFE:1, EVFE:1, OBFE:1,
+%%     OID:?UINT,
+%%   EVID,
+%%   TM,
+                SST:?BYTE,
+                RST:?BYTE,
+                SubData/binary>>
+            end,
   {ok, NewData}.
 
 sub_record_pack([Data, Type]) ->

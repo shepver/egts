@@ -50,7 +50,7 @@ stop() ->
 connect(Host, Port, Did) ->
   gen_server:cast(egts_work, {connect, Host, Port, Did}),
   ok.
-
+%% {IMEI,[{Action, Time, Lat, Lon, Speed, Cource, Mv},..]}
 send_pos_data({Imei, List}) ->
   gen_server:cast(egts_work, {pos_data, {Imei, List}}),
   ok.
