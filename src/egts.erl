@@ -46,7 +46,7 @@ stop() ->
   application:stop(egts).
 
 
-
+%% did - dispatcher ID
 connect(Host, Port, Did) ->
   gen_server:cast(egts_work, {connect, Host, Port, Did}),
   ok.
