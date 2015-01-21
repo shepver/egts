@@ -36,4 +36,4 @@
 -record(auth_disp, {dt = null, did = null, dscr = null}).
 
 %%  EGTS_TELEDATA_SERVICE
--record(pos_data, {ntm, lat, long, alth, lons, lans, mv, bb, cs, fix, vld, dirh, alts, spd, dir, odm, din, src, alt, srcd}).
+-record(pos_data, {ntm, lat, long, alth, lons, lans, mv = 0, bb, cs, fix, vld, dirh, alts, spd, dir, odm, din, src = 1, alt, srcd}).

@@ -11,6 +11,7 @@
 
 -behaviour(gen_server).
 -include("../include/egts_types.hrl").
+-include("../include/egts_record.hrl").
 %% API
 -export([start_link/0]).
 
@@ -24,7 +25,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {pid = 1, socket}).
+-record(state, {pid = 1, socket, last_data, host, port, did}).
 
 %%%===================================================================
 %%% API
@@ -64,7 +65,7 @@ init([]) ->
 %%   error_logger:info_msg("connect ~p .~n", [Sock]),
 %%   erlang:send_after(10, self(), run),
 %%   {ok, #state{socket = Sock}}
-    {ok, #state{}}
+  {ok, #state{}}
 .
 
 %%--------------------------------------------------------------------
@@ -88,10 +89,26 @@ handle_call({egts_auth, Auth}, _From, State) ->
   Data = egts_service_auth:term_identity(Auth),
   {reply, Data, State};
 
-handle_call(run, _From, State) ->
-  Data = egts:auth([1, 123456789012345]),
-  gen_tcp:send(State#state.socket, Data),
-  {reply, ok, State};
+handle_call({connect, Host, Port, DID}, _From, #state{pid = PID} = State) ->
+  case gen_tcp:connect(Host, Port, [{packet, 0}, binary]) of
+    {ok, Port} ->
+      {ok, SubType, Data} = egts_service_auth:dispatcher_identity({0, DID}),
+      NumberRecord = 1, %% порядковый номер строки
+      {ok, RecordData} = egts_service:auth_pack([Data, NumberRecord, SubType, 0]),
+      {ok, TransportData} = egts_transport:pack([RecordData, PID]),
+      case gen_tcp:send(Port, TransportData) of
+        ok ->
+          {reply, ok, State#state{socket = Port}};
+        Error ->
+          error_logger:error_msg("login error reason ~p ", [Error]),
+          erlang:send_after(30000, self(), {connect, Host, Port, DID}),
+          {reply, ok, State}
+      end;
+    Error ->
+      error_logger:error_msg("Connect error reason ~p ", [Error]),
+      erlang:send_after(30000, self(), {connect, Host, Port, DID}),
+      {reply, ok, State}
+  end;
 
 handle_call(_Request, _From, State) ->
   {reply, ok, State}.
@@ -107,8 +124,70 @@ handle_call(_Request, _From, State) ->
   {noreply, NewState :: #state{}} |
   {noreply, NewState :: #state{}, timeout() | hibernate} |
   {stop, Reason :: term(), NewState :: #state{}}).
+
+handle_cast({connect, Host, Port, DID}, #state{pid = PID} = State) ->
+  case gen_tcp:connect(Host, Port, [{packet, 0}, binary]) of
+    {ok, Port} ->
+      {ok, SubType, Data} = egts_service_auth:dispatcher_identity({0, DID}),
+      NumberRecord = 1, %% порядковый номер строки
+      {ok, RecordData} = egts_service:auth_pack([Data, NumberRecord, SubType, 0]),
+      {ok, TransportData} = egts_transport:pack([RecordData, PID]),
+      case gen_tcp:send(Port, TransportData) of
+        ok ->
+          {noreply, State#state{socket = Port, host = Host, port = Port, did = DID}};
+        Error ->
+          error_logger:error_msg("login error reason ~p ", [Error]),
+          erlang:send_after(30000, self(), {connect, Host, Port, DID}),
+          {noreply, State}
+      end;
+    Error ->
+      error_logger:error_msg("Connect error reason ~p ", [Error]),
+      erlang:send_after(30000, self(), {connect, Host, Port, DID}),
+      {noreply, State}
+  end;
+
+handle_cast(relogin, #state{host = Host, port = Port, did = DID, socket = Socet} = State) ->
+  gen_tcp:close(Socet),
+  gen_server:cast(self(), {connect, Host, Port, DID}),
+  {noreply, State};
+
+handle_cast({pos_data, {Imei, List}}, #state{socket = Socet, pid = PID} = State) ->
+  IMEI = if
+           is_binary(Imei) -> binary_to_list(Imei);
+           is_integer(Imei) -> integer_to_list(Imei);
+           is_list(Imei) -> Imei;
+           is_atom(Imei) -> atom_to_list(Imei);
+           true -> Imei
+         end,
+  OID = list_to_integer(lists:sublist(IMEI, length(IMEI) - 7, 8)),
+  NewPid = if
+             PID == 65535 -> 0;
+             true -> PID + 1
+           end,
+
+  {ok, SubType, Data} = prepare_data(List),
+  NumberRecord = 1, %% порядковый номер строки
+  {ok, RecordData} = egts_service:posdata_pack([Data, NumberRecord, SubType, OID]),
+  {ok, TransportData} = egts_transport:pack([RecordData, NewPid]),
+  case gen_tcp:send(Socet, TransportData) of
+    ok ->
+      {noreply, State#state{pid = NewPid}};
+    Error ->
+      error_logger:error_msg("login error reason ~p ", [Error]),
+      erlang:send_after(5000, self(), {pos_data, {Imei, List}}),
+      {noreply, State}
+  end;
+
 handle_cast(_Request, State) ->
   {noreply, State}.
+
+prepare_data(List) ->
+  prepare_data(List, {0, []}).
+prepare_data([], {SubType, Data})
+  -> {ok, SubType, Data};
+prepare_data([{Action, Time, Lat, Lon, Speed, Cource, Mv} | T], {_, Data}) ->
+  {ok, SubType, NewData} = egts_service_teledata:pos_data(#pos_data{ntm = Time, lat = Lat, long = Lon, spd = Speed, dir = Cource, mv = Mv, src = Action}),
+  prepare_data(T, {SubType, [NewData | Data]}).
 
 %%--------------------------------------------------------------------
 %% @private

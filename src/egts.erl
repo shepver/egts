@@ -19,6 +19,10 @@
 -export([auth_disp/1]).
 -export([response/1]).
 
+-export([connect/3]).
+-export([send_pos_data/1]).
+
+
 -export([pos_data/1]).
 
 
@@ -41,6 +45,15 @@ start() ->
 stop() ->
   application:stop(egts).
 
+
+
+connect(Host, Port, Did) ->
+  gen_server:cast(egts_work, {connect, Host, Port, Did}),
+  ok.
+
+send_pos_data({Imei, List}) ->
+  gen_server:cast(egts_work, {pos_data, {Imei, List}}),
+  ok.
 
 
 auth({Pid, [Login, IMEI, Disp]}) ->

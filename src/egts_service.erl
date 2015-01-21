@@ -70,9 +70,19 @@ pack([Data, Number, Type, SubType, Oid]) ->
   {ok, NewData}.
 
 sub_record_pack([Data, Type]) ->
+  if
+    is_list(Data) -> {ok, sub_record_pack([Data, Type], <<>>)};
+    is_binary(Data) ->
+      SRL = byte_size(Data),
+      {ok, <<Type:?BYTE, SRL:?USHORT, Data/binary>>};
+    true -> {ok, <<>>}
+  end
+.
+sub_record_pack([[], _Type], CurrentData) -> CurrentData;
+sub_record_pack([[Data | T], Type], CurrentData) ->
   SRL = byte_size(Data),
-  {ok, <<Type:?BYTE, SRL:?USHORT, Data/binary>>}.
-
+  NewData = <<Type:?BYTE, SRL:?USHORT, Data/binary>>,
+  sub_record_pack([T, Type], <<CurrentData/binary, NewData/binary>>).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
