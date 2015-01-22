@@ -25,7 +25,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {pid = 1, socket, last_data, host, port, did}).
+-record(state, {pid = 1, socket, last_data, host, port, did, accept_data, resend_count = 3}).
 
 %%%===================================================================
 %%% API
@@ -65,7 +65,7 @@ init([]) ->
 %%   error_logger:info_msg("connect ~p .~n", [Sock]),
 %%   erlang:send_after(10, self(), run),
 %%   {ok, #state{socket = Sock}}
-  {ok, #state{}}
+  {ok, #state{accept_data = dict:new()}}
 .
 
 %%--------------------------------------------------------------------
@@ -127,14 +127,14 @@ handle_call(_Request, _From, State) ->
 
 handle_cast({connect, Host, Port, DID}, #state{pid = PID} = State) ->
   case gen_tcp:connect(Host, Port, [{packet, 0}, binary]) of
-    {ok, Port} ->
+    {ok, Socket} ->
       {ok, SubType, Data} = egts_service_auth:dispatcher_identity({0, DID}),
       NumberRecord = 1, %% порядковый номер строки
       {ok, RecordData} = egts_service:auth_pack([Data, NumberRecord, SubType, 0]),
       {ok, TransportData} = egts_transport:pack([RecordData, PID]),
-      case gen_tcp:send(Port, TransportData) of
+      case gen_tcp:send(Socket, TransportData) of
         ok ->
-          {noreply, State#state{socket = Port, host = Host, port = Port, did = DID}};
+          {noreply, State#state{socket = Socket, host = Host, port = Port, did = DID}};
         Error ->
           error_logger:error_msg("login error reason ~p ", [Error]),
           erlang:send_after(30000, self(), {connect, Host, Port, DID}),
@@ -151,7 +151,10 @@ handle_cast(relogin, #state{host = Host, port = Port, did = DID, socket = Socet}
   gen_server:cast(self(), {connect, Host, Port, DID}),
   {noreply, State};
 
-handle_cast({pos_data, {Imei, List}}, #state{socket = Socet, pid = PID} = State) ->
+handle_cast({pos_data, {Imei, List}}, State) ->
+  gen_server:cast(self(), {pos_data, {Imei, List}, 1}),
+  {noreply, State};
+handle_cast({pos_data, {Imei, List}, N}, #state{socket = Socet, pid = PID, accept_data = ADATA, resend_count = Count} = State) when (N =< Count) ->
   IMEI = if
            is_binary(Imei) -> binary_to_list(Imei);
            is_integer(Imei) -> integer_to_list(Imei);
@@ -171,10 +174,10 @@ handle_cast({pos_data, {Imei, List}}, #state{socket = Socet, pid = PID} = State)
   {ok, TransportData} = egts_transport:pack([RecordData, NewPid]),
   case gen_tcp:send(Socet, TransportData) of
     ok ->
-      {noreply, State#state{pid = NewPid}};
+      {noreply, State#state{pid = NewPid, accept_data = dict:store(NewPid, {pos_data, {Imei, List}, N}, ADATA)}};
     Error ->
       error_logger:error_msg("login error reason ~p ", [Error]),
-      erlang:send_after(5000, self(), {pos_data, {Imei, List}}),
+      erlang:send_after(5000, self(), {pos_data, {Imei, List}, N + 1}),
       {noreply, State}
   end;
 
@@ -204,19 +207,25 @@ prepare_data([{Action, Time, Lat, Lon, Speed, Cource, Mv} | T], {_, Data}) ->
   {noreply, NewState :: #state{}, timeout() | hibernate} |
   {stop, Reason :: term(), NewState :: #state{}}).
 
-handle_info({pos_data, {Imei, List}}, State) ->
-  gen_server:cast(self(), {pos_data, {Imei, List}}),
+handle_info({pos_data, {Imei, List}, N}, State) ->
+  gen_server:cast(self(), {pos_data, {Imei, List}, N}),
   {noreply, State};
 
-handle_info({tcp, _Socket, Data}, #state{pid = Pid, socket = Socket} = State) ->
+handle_info({tcp, _Socket, Data}, #state{pid = Pid, socket = Socket, accept_data = ADATA} = State) ->
   NewPid = if
              Pid == 65535 -> 0;
              true -> Pid + 1
            end,
   case egts:response({NewPid, 0, Data}) of
     {response, RPID, STATUS, SRD_LIST} ->
+      if
+        STATUS =/= 0 ->
+          {ok, {pos_data, Val, N}} = dict:find(RPID, ADATA),
+          gen_server:cast(self(), {pos_data, Val, N + 1});
+        true -> ok
+      end,
       error_logger:info_msg("Respone rpid ~p status ~p  r_list ~p.~n", [RPID, STATUS, egts_service:pars_for_info(SRD_LIST)]),
-      {noreply, State}
+      {noreply, State#state{accept_data = dict:erase(RPID, ADATA)}}
   ;
     {app_data, TransportDataResponse, DataList} ->
       gen_tcp:send(Socket, TransportDataResponse),
