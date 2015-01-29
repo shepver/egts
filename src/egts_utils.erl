@@ -113,10 +113,10 @@ result(Num) -> {Num, 'unknown_code', "неизвесный код"}. %%  тес�
 
 get_time() ->
   {Mega, Sec, _} = now(),
-  Mega * 1000000 + Sec - 63429523200
+  Mega * 1000000 + Sec - 1262304000
 .
 get_time(Time) ->
-  Time - 63429523200
+  Time - 1262304000
 .
 
 sign(D) when (D > 0) -> 0;
