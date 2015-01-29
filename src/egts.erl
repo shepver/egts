@@ -27,6 +27,7 @@
 
 
 -export([test/0]).
+-export([valid/1]).
 
 %% encode_pos_data(Data) when is_tuple(Data) ->
 %%   {Time, Lon, Lat} = Data,
@@ -118,3 +119,30 @@ test() ->
 %%   egts_service_teledata:packet_data(#pos_data{ntm = 1416635639, lat = 52.252659, long = 104.343803, spd =  50.00, dir = 100})
 .
 
+valid(Data)->
+  case egts_transport:response({Data, 1}) of
+    {error, Code} -> {error, egts_utils:result(Code)};
+    {ok, Record} ->
+      if
+        is_record(Record, egts_pt_response) ->
+%%           пришел ответ на транспортный пакет
+%%           помечаем где надо что пакет они приняли и ждем результата обработки
+          {response, Record#egts_pt_response.rpid, Record#egts_pt_response.pr, Record#egts_pt_response.record_list}
+%%             zaglushka
+      ;
+        is_record(Record, egts_pt_appdata) ->
+%%           пришел пакет данных с сервера надо им ответить что мы пакет приняли и обработать пакет (скорее всего с ответами)
+%%           данные для ответа на сервер
+%%           RecordData = Record#egts_pt_appdata.response,
+%%           PID = 1, %% порядковй номер пакета для данной сессии PID_old + 1
+%%           {ok, TransportDataResponse} = egts_transport:pack([RecordData, PID, ?EGTS_PT_RESPONSE]),
+%%           данные для обработки  Record#egts_pt_appdata.record_list,
+          %% получаем список строк записей
+%%           _d = {app_data, TransportDataResponse, Record#egts_pt_appdata.record_list},
+         D = egts_service:pars_for_info( Record#egts_pt_appdata.record_list),
+         error_logger:error_msg("pars list ~p ", [D])
+%%          , zaglushka
+      ;
+        true -> {un, Data}
+      end
+  end.
