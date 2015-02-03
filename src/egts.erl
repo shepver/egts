@@ -49,10 +49,7 @@ stop() ->
 
 %% did - dispatcher ID
 connect(Host, Port, Did) ->
-  application:set_env(egts, host, Host),
-  application:set_env(egts, port, Port),
-  application:set_env(egts, did, Did),
-  gen_server:cast(egts_work, {connect, Host, Port, Did}),
+   gen_server:cast(egts_work, {connect, Host, Port, Did}),
   ok.
 %% {IMEI,[{Action, Time, Lat, Lon, Speed, Cource, Mv},..]}
 send_pos_data({Imei, List}) ->

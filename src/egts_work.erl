@@ -106,6 +106,9 @@ handle_call(_Request, _From, State) ->
   {stop, Reason :: term(), NewState :: #state{}}).
 
 handle_cast({connect, Host, Port, DID}, #state{pid = PID} = State) ->
+  application:set_env(egts, host, Host),
+  application:set_env(egts, port, Port),
+  application:set_env(egts, did, DID),
   case gen_tcp:connect(Host, Port, [{packet, 0}, binary]) of
     {ok, Socket} ->
       {ok, SubType, Data} = egts_service_auth:dispatcher_identity({0, DID}),
