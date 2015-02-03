@@ -49,6 +49,9 @@ stop() ->
 
 %% did - dispatcher ID
 connect(Host, Port, Did) ->
+  application:set_env(egts, host, Host),
+  application:set_env(egts, port, Port),
+  application:set_env(egts, did, Did),
   gen_server:cast(egts_work, {connect, Host, Port, Did}),
   ok.
 %% {IMEI,[{Action, Time, Lat, Lon, Speed, Cource, Mv},..]}
@@ -119,7 +122,7 @@ test() ->
 %%   egts_service_teledata:packet_data(#pos_data{ntm = 1416635639, lat = 52.252659, long = 104.343803, spd =  50.00, dir = 100})
 .
 
-valid(Data)->
+valid(Data) ->
   case egts_transport:response({Data, 1}) of
     {error, Code} -> {error, egts_utils:result(Code)};
     {ok, Record} ->
@@ -139,8 +142,8 @@ valid(Data)->
 %%           данные для обработки  Record#egts_pt_appdata.record_list,
           %% получаем список строк записей
 %%           _d = {app_data, TransportDataResponse, Record#egts_pt_appdata.record_list},
-         D = egts_service:pars_for_info( Record#egts_pt_appdata.record_list),
-         error_logger:error_msg("pars list ~p ", [D])
+          D = egts_service:pars_for_info(Record#egts_pt_appdata.record_list),
+          error_logger:error_msg("pars list ~p ", [D])
 %%          , zaglushka
       ;
         true -> {un, Data}
