@@ -203,30 +203,9 @@ handle_info({pos_data, {Imei, List}, N}, State) ->
   gen_server:cast(self(), {pos_data, {Imei, List}, N}),
   {noreply, State};
 
-handle_info({tcp, _Socket, Data}, #state{pid = Pid, socket = Socket, accept_data = ADATA} = State) ->
-  NewPid = if
-             Pid == 65535 -> 0;
-             true -> Pid + 1
-           end,
-  case egts:response({NewPid, 0, Data}) of
-    {response, RPID, STATUS, SRD_LIST} ->
-      if
-        STATUS =/= 0 ->
-          {ok, {pos_data, Val, N}} = dict:find(RPID, ADATA),
-          gen_server:cast(self(), {pos_data, Val, N + 1});
-        true -> ok
-      end,
-      error_logger:info_msg("Respone rpid ~p status ~p  r_list ~p.~n", [RPID, STATUS, egts_service:pars_for_info(SRD_LIST)]),
-      {noreply, State#state{accept_data = dict:erase(RPID, ADATA)}}
-  ;
-    {app_data, TransportDataResponse, DataList} ->
-      gen_tcp:send(Socket, TransportDataResponse),
-      error_logger:info_msg("Result list ~p .~n", [egts_service:pars_for_info(DataList)]),
-      {noreply, State#state{pid = NewPid}};
-    {un, Data} ->
-      error_logger:info_msg("UNResult ~p .~n", [Data]),
-      {noreply, State}
-  end;
+handle_info({tcp, _Socket, Data}, State) ->
+  List = egts:response({list, 0, Data}),
+  {noreply, resend(List, State)};
 
 handle_info({tcp_closed, _Socket}, State) ->
   gen_server:cast(self(), relogin),
@@ -243,6 +222,33 @@ handle_info(relogin, State) ->
 handle_info(_Info, State) ->
   error_logger:info_msg("info ~p .~n", [_Info]),
   {noreply, State}.
+
+resend([], State) -> State;
+resend([Data | Tail], #state{pid = Pid, socket = Socket, accept_data = ADATA} = State) ->
+
+  NewPid = if
+             Pid == 65535 -> 0;
+             true -> Pid + 1
+           end,
+  case egts:response({responce, NewPid, Data}) of
+    {response, RPID, STATUS, SRD_LIST} ->
+      if
+        STATUS =/= 0 ->
+          {ok, {pos_data, Val, N}} = dict:find(RPID, ADATA),
+          gen_server:cast(self(), {pos_data, Val, N + 1});
+        true -> ok
+      end,
+      error_logger:info_msg("Respone rpid ~p status ~p  r_list ~p.~n", [RPID, STATUS, egts_service:pars_for_info(SRD_LIST)]),
+      resend(Tail, State#state{accept_data = dict:erase(RPID, ADATA)})
+  ;
+    {app_data, TransportDataResponse, DataList} ->
+      gen_tcp:send(Socket, TransportDataResponse),
+      error_logger:info_msg("Result list ~p .~n", [egts_service:pars_for_info(DataList)]),
+      resend(Tail, State#state{pid = NewPid});
+    {un, Data} ->
+      error_logger:info_msg("UNResult ~p .~n", [Data]),
+      resend(Tail, State)
+  end.
 
 %%--------------------------------------------------------------------
 %% @private

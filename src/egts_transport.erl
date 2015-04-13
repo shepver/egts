@@ -116,27 +116,44 @@ parse(<<_:40, FDL:?USHORT, _/binary>> = _Data) when (FDL =:= 0) ->
 parse(<<1:?BYTE, _Skid:?BYTE, 0:2, 0:1, 0:2, 0:1, _PR:2, 11:?BYTE, _:8, FDL:?USHORT, PID:?USHORT, PT:?BYTE, _/binary>> = Data) when (FDL > 0) ->
   <<Header:10/binary-unit:8, HCS:?BYTE, FD/binary>> = Data,
 %%   error_logger:error_msg("FDL ~p FD size ~p FD ~p ",[FDL,byte_size(FD),FD]),
-  <<SFRD:FDL/binary-unit:8, SFRCS:?USHORT>> = FD,
+  case FD of
+    <<SFRD:FDL/binary-unit:8, SFRCS:?USHORT>> -> [spack(PT, PID, HCS, Header, SFRCS, SFRD)];
+    <<SFRD:FDL/binary-unit:8, SFRCS:?USHORT, Tail/binary>> -> [spack(PT, PID, HCS, Header, SFRCS, SFRD) | parse(Tail)]
+  end;
+parse(_Data) ->
+  {error, unknown}.
+
+spack(PT, PID, HCS, Header, SFRCS, SFRD) ->
   case {egts_utils:check_crc8(HCS, Header), egts_utils:check_crc16(SFRCS, SFRD)} of
     {true, true} -> {ok, {PT, PID, SFRD}};
     {false, _} -> {error, ?EGTS_PC_HEADERCRC_ERROR};
     {_, false} -> {error, ?EGTS_PC_DATACRC_ERROR}
   end
-;
-parse(_Data) ->
-  {error, unknown}.
+.
 
 
 response({Data, OID}) ->
-  case parse(Data) of
-    {ok, {?EGTS_PT_RESPONSE, _PID, SFRD}} ->
-      <<RPID:?USHORT, PR:?BYTE, Other/binary>> = SFRD,
-      {ok, #egts_pt_response{rpid = RPID, pr = PR, record_list = Other}};
-    {ok, {?EGTS_PT_APPDATA, PID, SFRD}} ->
-      {ok, RData} = egts_service:pars_for_responce({SFRD, OID}),
-      {ok, #egts_pt_appdata{record_list = SFRD, response = <<PID:?USHORT, ?EGTS_PC_OK:?BYTE, RData/binary>>}};
-    All -> All
-  end.
+%%   case parse(Data) of
+%%     {ok, {?EGTS_PT_RESPONSE, _PID, SFRD}} ->
+%%       <<RPID:?USHORT, PR:?BYTE, Other/binary>> = SFRD,
+%%       {ok, #egts_pt_response{rpid = RPID, pr = PR, record_list = Other}};
+%%     {ok, {?EGTS_PT_APPDATA, PID, SFRD}} ->
+%%       {ok, RData} = egts_service:pars_for_responce({SFRD, OID}),
+%%       {ok, #egts_pt_appdata{record_list = SFRD, response = <<PID:?USHORT, ?EGTS_PC_OK:?BYTE, RData/binary>>}};
+%%     All -> All
+%%   end
+  rlpars(OID, parse(Data))
+.
+
+rlpars(_, []) -> [];
+rlpars(OID, [{ok, {?EGTS_PT_RESPONSE, _PID, SFRD}} | T]) ->
+  <<RPID:?USHORT, PR:?BYTE, Other/binary>> = SFRD,
+  [{ok, #egts_pt_response{rpid = RPID, pr = PR, record_list = Other}} | rlpars(OID, T)];
+rlpars(OID, [{ok, {?EGTS_PT_APPDATA, PID, SFRD}} | T]) ->
+  {ok, RData} = egts_service:pars_for_responce({SFRD, OID}),
+  [{ok, #egts_pt_appdata{record_list = SFRD, response = <<PID:?USHORT, ?EGTS_PC_OK:?BYTE, RData/binary>>}} | rlpars(OID, T)];
+rlpars(OID, [ERROR | T]) ->
+  [ERROR | rlpars(OID, T)].
 
 
 pack([Data, Pid]) ->

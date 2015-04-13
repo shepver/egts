@@ -28,6 +28,7 @@
 
 -export([test/0]).
 -export([valid/1]).
+-export([valid2/1]).
 
 %% encode_pos_data(Data) when is_tuple(Data) ->
 %%   {Time, Lon, Lat} = Data,
@@ -49,7 +50,7 @@ stop() ->
 
 %% did - dispatcher ID
 connect(Host, Port, Did) ->
-   gen_server:cast(egts_work, {connect, Host, Port, Did}),
+  gen_server:cast(egts_work, {connect, Host, Port, Did}),
   ok.
 %% {IMEI,[{Action, Time, Lat, Lon, Speed, Cource, Mv},..]}
 send_pos_data({Imei, List}) ->
@@ -87,8 +88,11 @@ pos_data({Pid, OID, [Time, Lat, Lon, Speed, Dir]}) ->
 
 
 %%  получили товет от сервера и обрабатываем
-response({Pid, OID, Data}) ->
-  case egts_transport:response({Data, OID}) of
+response({list, OID, Data}) ->
+  egts_transport:response({Data, OID});
+
+response({responce, Pid, SendData}) ->
+  case SendData of
     {error, Code} -> {error, egts_utils:result(Code)};
     {ok, Record} ->
       if
@@ -109,7 +113,7 @@ response({Pid, OID, Data}) ->
           {app_data, TransportDataResponse, Record#egts_pt_appdata.record_list}
 %%          , zaglushka
       ;
-        true -> {un, Data}
+        true -> {un, SendData}
       end
   end.
 
@@ -145,4 +149,25 @@ valid(Data) ->
       ;
         true -> {un, Data}
       end
+  end.
+
+
+valid2(Data) ->
+  resend(egts_transport:response({Data, 1})).
+
+
+
+resend([]) -> ok;
+resend([Data | Tail]) ->
+  case egts:response({responce, 1, Data}) of
+    {response, RPID, STATUS, SRD_LIST} ->
+      error_logger:info_msg("Respone rpid ~p status ~p  r_list ~p.~n", [RPID, STATUS, egts_service:pars_for_info(SRD_LIST)]),
+      resend(Tail)
+  ;
+    {app_data, _TransportDataResponse, DataList} ->
+      error_logger:info_msg("Result list ~p .~n", [egts_service:pars_for_info(DataList)]),
+      resend(Tail);
+    {un, Data} ->
+      error_logger:info_msg("UNResult ~p .~n", [Data]),
+      resend(Tail)
   end.
