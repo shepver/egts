@@ -68,21 +68,21 @@ erecord(2, 28) -> {28, 'EGTS_SR_PASSENGERS_COUNTERS'};
 
 erecord(_, Num) -> {Num, unknown_record}.
 
-%% я не упроротый просто так проще
-result(0) -> {0, 'EGTS_PC_OK', "uspechno obrabotano"};
-result(1) -> {1, 'EGTS_PC_IN_PROGRESS', "v processe obrabotky"};
-result(128) -> {128, 'EGTS_PC_UNS_PROTOCOL', "nepodderzivaemiy protocol"};
-result(129) -> {129, 'EGTS_PC_DECRYPT_ERROR', "oshibka dekodirovanija"};
-result(130) -> {130, 'EGTS_PC_PROC_DENIED', "obrabotka zapreshena"};
-result(131) -> {131, 'EGTS_PC_INC_HEADERFORM', "	неверный формат заголовка	"};
+%%
+result(0) -> {0, 'EGTS_PC_OK', "successfully processed"};
+result(1) -> {1, 'EGTS_PC_IN_PROGRESS', "during the processing"};
+result(128) -> {128, 'EGTS_PC_UNS_PROTOCOL', "unsupported protocol"};
+result(129) -> {129, 'EGTS_PC_DECRYPT_ERROR', "decoding error"};
+result(130) -> {130, 'EGTS_PC_PROC_DENIED', "processing prohibited"};
+result(131) -> {131, 'EGTS_PC_INC_HEADERFORM', "invalid format header"};
 result(132) -> {132, 'EGTS_PC_INC_DATAFORM', "	неверный формат данных	"};
-result(133) -> {133, 'EGTS_PC_UNS TYPE', "	неподдерживаемый тип	"};
-result(134) -> {134, 'EGTS_PC_NOTEN_PARAMS', "	неверное количество параметров	"};
-result(135) -> {135, 'EGTS_PC_DBL_PROC', "	попытка повторной обработки	"};
-result(136) -> {136, 'EGTS_PC_PROC_SRC_DENIED', "	обработка данных от источника запрещена	"};
-result(137) -> {137, 'EGTS_PC_HEADERCRC_ERROR', "	ошибка контрольной суммы заголовка	"};
-result(138) -> {138, 'EGTS_PC_DATACRC_ERROR', "	ошибка контрольной суммы данных	"};
-result(139) -> {139, 'EGTS_PC_INVDATALEN', "	некорректная длина данных	"};
+result(133) -> {133, 'EGTS_PC_UNS TYPE', "unsupported type"};
+result(134) -> {134, 'EGTS_PC_NOTEN_PARAMS', "incorrect number of parameters"};
+result(135) -> {135, 'EGTS_PC_DBL_PROC', "attempt to reprocess"};
+result(136) -> {136, 'EGTS_PC_PROC_SRC_DENIED', "processing data from the source is prohibited"};
+result(137) -> {137, 'EGTS_PC_HEADERCRC_ERROR', "checksum error header"};
+result(138) -> {138, 'EGTS_PC_DATACRC_ERROR', "checksum error data"};
+result(139) -> {139, 'EGTS_PC_INVDATALEN', "incorrect data length"};
 result(140) -> {140, 'EGTS_PC_ROUTE_NFOUND', "	маршрут не найден	"};
 result(141) -> {141, 'EGTS_PC_ROUTE_CLOSED', "	маршрут закрыт	"};
 result(142) -> {142, 'EGTS_PC_ROUTE_DENIED', "	маршрутизация запрещена	"};
